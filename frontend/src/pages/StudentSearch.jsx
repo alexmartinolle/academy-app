@@ -1,20 +1,58 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Filter, User, Calendar, AlertCircle } from 'lucide-react'
-import { studentsAPI } from '../services/api'
+import { Search, Filter, User, Calendar, AlertCircle, Plus } from 'lucide-react'
+import { studentsAPI, paymentsAPI } from '../services/api'
 
 const StudentSearch = () => {
   const [students, setStudents] = useState([])
+  const [studentsWithPayments, setStudentsWithPayments] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    const fetchStudents = async () => {
+    const fetchStudentsWithPayments = async () => {
       try {
-        const data = await studentsAPI.getAll()
-        setStudents(data)
+        const studentsData = await studentsAPI.getAll()
+        
+        // Fetch payments for each student
+        const studentsWithPaymentInfo = await Promise.all(
+          studentsData.map(async (student) => {
+            try {
+              const payments = await paymentsAPI.getByStudent(student.id)
+              const paidPayments = payments.filter(p => p.status === 'paid')
+              
+              // Get the most recent payment
+              const lastPayment = paidPayments.length > 0 
+                ? paidPayments.reduce((latest, payment) => {
+                    const paymentDate = new Date(payment.year, payment.month - 1)
+                    const latestDate = new Date(latest.year, latest.month - 1)
+                    return paymentDate > latestDate ? payment : latest
+                  }, paidPayments[0])
+                : null
+              
+              return {
+                ...student,
+                lastPayment: lastPayment ? {
+                  date: lastPayment.payment_date,
+                  month: lastPayment.month,
+                  year: lastPayment.year,
+                  amount: lastPayment.price || lastPayment.amount
+                } : null
+              }
+            } catch (error) {
+              console.error(`Error fetching payments for student ${student.id}:`, error)
+              return {
+                ...student,
+                lastPayment: null
+              }
+            }
+          })
+        )
+        
+        setStudents(studentsData)
+        setStudentsWithPayments(studentsWithPaymentInfo)
       } catch (error) {
         console.error('Error fetching students:', error)
         setError('Failed to load students')
@@ -23,10 +61,10 @@ const StudentSearch = () => {
       }
     }
 
-    fetchStudents()
+    fetchStudentsWithPayments()
   }, [])
 
-  const filteredStudents = students.filter(student => {
+  const filteredStudents = studentsWithPayments.filter(student => {
     const matchesSearch = 
       (student.first_name && student.first_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (student.last_name && student.last_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -45,8 +83,6 @@ const StudentSearch = () => {
         return 'bg-yellow-100 text-yellow-800'
       case 'inactive':
         return 'bg-red-100 text-red-800'
-      case 'trial':
-        return 'bg-blue-100 text-blue-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
@@ -54,6 +90,21 @@ const StudentSearch = () => {
 
   const getTypeColor = (type) => {
     return type === 'adult' ? 'bg-gray-100 text-gray-800' : 'bg-purple-100 text-purple-800'
+  }
+
+  const getMonthName = (month) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    return months[month - 1]
+  }
+
+  const formatLastPayment = (lastPayment) => {
+    if (!lastPayment) return 'No payments'
+    
+    const paymentDate = new Date(lastPayment.date)
+    const formattedDate = paymentDate.toLocaleDateString()
+    const monthYear = `${getMonthName(lastPayment.month)} ${lastPayment.year}`
+    
+    return `${monthYear} (€${lastPayment.amount})`
   }
 
   if (loading) {
@@ -78,9 +129,18 @@ const StudentSearch = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Student Search</h1>
-        <p className="mt-2 text-gray-600">Find and manage student information</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Student Search</h1>
+          <p className="mt-2 text-gray-600">Find and manage student information</p>
+        </div>
+        <Link
+          to="/students/new"
+          className="btn btn-secondary flex items-center"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Student
+        </Link>
       </div>
 
       {/* Search and Filters */}
@@ -109,7 +169,6 @@ const StudentSearch = () => {
               <option value="active">Active</option>
               <option value="pending">Pending</option>
               <option value="inactive">Inactive</option>
-              <option value="trial">Trial</option>
             </select>
           </div>
         </div>
@@ -132,10 +191,6 @@ const StudentSearch = () => {
           <div className="flex items-center">
             <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
             <span className="text-gray-600">Inactive</span>
-          </div>
-          <div className="flex items-center">
-            <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-            <span className="text-gray-600">Trial</span>
           </div>
         </div>
       </div>
@@ -169,7 +224,7 @@ const StudentSearch = () => {
                 <p className="text-sm font-medium text-gray-900">{student.plan}</p>
                 <div className="flex items-center text-sm text-gray-500 mt-1">
                   <Calendar className="h-4 w-4 mr-1" />
-                  {student.lastPayment ? `Last: ${student.lastPayment}` : 'No payments'}
+                  {formatLastPayment(student.lastPayment)}
                 </div>
                 {student.amountDue && (
                   <div className="flex items-center text-sm font-semibold text-yellow-600 mt-1">
