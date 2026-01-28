@@ -12,7 +12,7 @@ SELECT
     s.last_name,
     CASE
         -- Student paid current month
-        WHEN MAX(p.year * 12 + p.month) =
+        WHEN COALESCE(MAX(p.year * 12 + p.month), 0) =
              (EXTRACT(YEAR FROM CURRENT_DATE)::INT * 12
               + EXTRACT(MONTH FROM CURRENT_DATE)::INT)
         THEN 'active'
@@ -21,16 +21,15 @@ SELECT
             (EXTRACT(YEAR FROM CURRENT_DATE)::INT * 12
              + EXTRACT(MONTH FROM CURRENT_DATE)::INT)
             -
-            COALESCE(MAX(p.year * 12 + p.month),
-                     (EXTRACT(YEAR FROM s.enrollment_date)::INT * 12
-                      + EXTRACT(MONTH FROM s.enrollment_date)::INT))
+            COALESCE(MAX(p.year * 12 + p.month), 0)
         ) >= 3
+        THEN 'inactive'
         -- Pending (1–2 months without payment)
         ELSE 'pending'
     END AS student_status
 FROM students s
 LEFT JOIN payments p ON p.student_id = s.id
-GROUP BY s.id;
+GROUP BY s.id, s.first_name, s.last_name;
 
 -- =========================
 -- Last payment date for each student
