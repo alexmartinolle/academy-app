@@ -176,7 +176,9 @@ const StudentDetail = () => {
       // Filtrar planes según el tipo de estudiante
       const filteredPlans = student?.type === 'adult' 
         ? plansData.filter(plan => plan.type === 'adult')
-        : plansData // Si es kid, puede adquirir todos los planes
+        : student?.type === 'kids'
+          ? plansData.filter(plan => plan.type === 'kids')
+          : plansData // Por defecto, mostrar todos
       
       setAvailablePlans(filteredPlans)
       setShowPlanDialog(true)
@@ -787,8 +789,10 @@ const StudentDetail = () => {
             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
                 {student?.type === 'adult' 
-                  ? '👤 Adult plans only available for adult students'
-                  : '👶 All plans available for kids students'
+                  ? '👤 Only adult plans are shown for adult students'
+                  : student?.type === 'kids'
+                    ? '👶 Only kids plans are shown for kids students'
+                    : '📋 All plans available'
                 }
               </p>
             </div>

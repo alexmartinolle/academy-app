@@ -8,6 +8,7 @@ const StudentSearch = () => {
   const [studentsWithPayments, setStudentsWithPayments] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [filterType, setFilterType] = useState('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -70,9 +71,10 @@ const StudentSearch = () => {
       (student.last_name && student.last_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (student.email && student.email.toLowerCase().includes(searchTerm.toLowerCase()))
     
-    const matchesFilter = filterStatus === 'all' || student.student_status === filterStatus
+    const matchesStatusFilter = filterStatus === 'all' || student.student_status === filterStatus
+    const matchesTypeFilter = filterType === 'all' || student.type === filterType
     
-    return matchesSearch && matchesFilter
+    return matchesSearch && matchesStatusFilter && matchesTypeFilter
   })
 
   const getStatusColor = (status) => {
@@ -170,6 +172,15 @@ const StudentSearch = () => {
               <option value="pending">Pending</option>
               <option value="inactive">Inactive</option>
             </select>
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="input"
+            >
+              <option value="all">All Types</option>
+              <option value="adult">Adult</option>
+              <option value="kids">Kids</option>
+            </select>
           </div>
         </div>
       </div>
@@ -191,6 +202,14 @@ const StudentSearch = () => {
           <div className="flex items-center">
             <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
             <span className="text-gray-600">Inactive</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-3 h-3 bg-gray-500 rounded-full mr-2"></div>
+            <span className="text-gray-600">Adult</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
+            <span className="text-gray-600">Kids</span>
           </div>
         </div>
       </div>
@@ -215,9 +234,14 @@ const StudentSearch = () => {
                     {student.first_name} {student.last_name}
                   </div>
                   <div className="text-sm text-gray-500">{student.email}</div>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(student.student_status)} mt-1`}>
-                    {student.student_status}
-                  </span>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(student.student_status)}`}>
+                      {student.student_status}
+                    </span>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(student.type)}`}>
+                      {student.type}
+                    </span>
+                  </div>
                 </div>
               </div>
               <div className="text-right">
