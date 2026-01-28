@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Users, AlertCircle, TrendingUp, DollarSign, Calendar } from 'lucide-react'
+import { dashboardAPI } from '../services/api'
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -11,33 +12,48 @@ const Dashboard = () => {
   })
   const [pendingStudents, setPendingStudents] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Mock data - replace with API calls
-    const mockStats = {
-      totalStudents: 20,
-      activeStudents: 9,
-      pendingPayments: 3,
-      monthlyRevenue: 1250
+    const fetchDashboardData = async () => {
+      try {
+        const [statsData, distributionData] = await Promise.all([
+          dashboardAPI.getStats(),
+          dashboardAPI.getStudentDistribution()
+        ])
+        
+        setStats(statsData)
+        
+        // Get pending students from distribution or create from stats
+        const pendingStudents = distributionData.find(s => s.status === 'pending')?.students || []
+        setPendingStudents(pendingStudents)
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error)
+        // Show error state instead of fallback mock data
+        setError('Failed to load dashboard data')
+      } finally {
+        setLoading(false)
+      }
     }
-    
-    const mockPendingStudents = [
-      { id: 10, name: 'Robert Taylor', amount: 50, daysLate: 59 },
-      { id: 11, name: 'Ana Martinez', amount: 70, daysLate: 30 },
-      { id: 13, name: 'Olivia Lopez', amount: 65, daysLate: 30 }
-    ]
 
-    setTimeout(() => {
-      setStats(mockStats)
-      setPendingStudents(mockPendingStudents)
-      setLoading(false)
-    }, 500)
+    fetchDashboardData()
   }, [])
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+          <span className="text-red-800">{error}</span>
+        </div>
       </div>
     )
   }

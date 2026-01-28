@@ -10,6 +10,7 @@ import {
   Clock,
   AlertCircle
 } from 'lucide-react'
+import { paymentsAPI } from '../services/api'
 
 const Financial = () => {
   const [payments, setPayments] = useState([])
@@ -18,159 +19,31 @@ const Financial = () => {
   const [filterYear, setFilterYear] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Mock data - replace with API calls
-    const mockPayments = [
-      { 
-        id: 1, 
-        studentId: 1,
-        studentName: 'John Smith',
-        planName: '1 class per week',
-        month: 1, 
-        year: 2026, 
-        paymentDate: '2026-01-01', 
-        status: 'paid', 
-        source: 'monthly',
-        amount: 50
-      },
-      { 
-        id: 2, 
-        studentId: 2,
-        studentName: 'Maria Garcia',
-        planName: '2 classes per week',
-        month: 1, 
-        year: 2026, 
-        paymentDate: '2026-01-05', 
-        status: 'paid', 
-        source: 'monthly',
-        amount: 70
-      },
-      { 
-        id: 3, 
-        studentId: 3,
-        studentName: 'David Johnson',
-        planName: 'BJJ Unlimited',
-        month: 1, 
-        year: 2026, 
-        paymentDate: '2026-01-10', 
-        status: 'paid', 
-        source: 'monthly',
-        amount: 90
-      },
-      { 
-        id: 4, 
-        studentId: 4,
-        studentName: 'Emma Wilson',
-        planName: 'All Unlimited',
-        month: 1, 
-        year: 2026, 
-        paymentDate: '2026-01-15', 
-        status: 'paid', 
-        source: 'monthly',
-        amount: 98
-      },
-      { 
-        id: 5, 
-        studentId: 5,
-        studentName: 'Carlos Rodriguez',
-        planName: 'MMA Unlimited',
-        month: 1, 
-        year: 2026, 
-        paymentDate: '2026-01-20', 
-        status: 'paid', 
-        source: 'monthly',
-        amount: 80
-      },
-      { 
-        id: 6, 
-        studentId: 6,
-        studentName: 'Lucas Martin',
-        planName: 'Unlimited',
-        month: 1, 
-        year: 2026, 
-        paymentDate: '2026-01-25', 
-        status: 'paid', 
-        source: 'monthly',
-        amount: 75
-      },
-      { 
-        id: 7, 
-        studentId: 7,
-        studentName: 'Sofia Anderson',
-        planName: '2 classes per week',
-        month: 1, 
-        year: 2026, 
-        paymentDate: '2026-01-28', 
-        status: 'paid', 
-        source: 'monthly',
-        amount: 65
-      },
-      { 
-        id: 8, 
-        studentId: 8,
-        studentName: 'Michael Brown',
-        planName: '1 class per week',
-        month: 1, 
-        year: 2026, 
-        paymentDate: '2026-01-30', 
-        status: 'paid', 
-        source: 'monthly',
-        amount: 50
-      },
-      { 
-        id: 9, 
-        studentId: 9,
-        studentName: 'Robert Taylor',
-        planName: 'BJJ Unlimited',
-        month: 1, 
-        year: 2026, 
-        paymentDate: null, 
-        status: 'pending', 
-        source: null,
-        amount: 90
-      },
-      { 
-        id: 10, 
-        studentId: 10,
-        studentName: 'Ana Martinez',
-        planName: '2 classes per week',
-        month: 1, 
-        year: 2026, 
-        paymentDate: null, 
-        status: 'pending', 
-        source: null,
-        amount: 70
-      },
-      { 
-        id: 11, 
-        studentId: 11,
-        studentName: 'James Davis',
-        planName: 'MMA Unlimited',
-        month: 1, 
-        year: 2026, 
-        paymentDate: null, 
-        status: 'pending', 
-        source: null,
-        amount: 80
+    const fetchFinancialData = async () => {
+      try {
+        const currentDate = new Date()
+        const year = currentDate.getFullYear()
+        const month = currentDate.getMonth() + 1
+        
+        const [paymentsData, revenueData] = await Promise.all([
+          paymentsAPI.getAll(),
+          paymentsAPI.getRevenueStats(year, month)
+        ])
+        
+        setPayments(paymentsData)
+        setRevenueStats(revenueData)
+      } catch (error) {
+        console.error('Error fetching financial data:', error)
+        setError('Failed to load financial data')
+      } finally {
+        setLoading(false)
       }
-    ]
-
-    const mockRevenueStats = {
-      totalRevenue: 1250,
-      paidRevenue: 728,
-      pendingRevenue: 522,
-      totalPayments: 11,
-      paidPayments: 8,
-      pendingPayments: 3,
-      averagePayment: 113.64
     }
 
-    setTimeout(() => {
-      setPayments(mockPayments)
-      setRevenueStats(mockRevenueStats)
-      setLoading(false)
-    }, 500)
+    fetchFinancialData()
   }, [])
 
   const filteredPayments = payments.filter(payment => {
@@ -212,6 +85,17 @@ const Financial = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+          <span className="text-red-800">{error}</span>
+        </div>
       </div>
     )
   }

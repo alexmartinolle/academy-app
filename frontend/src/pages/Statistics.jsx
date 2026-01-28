@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Users, TrendingUp, DollarSign, Activity } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { statisticsAPI } from '../services/api'
 
 const Statistics = () => {
   const [stats, setStats] = useState({
@@ -15,52 +16,47 @@ const Statistics = () => {
   const [planDistribution, setPlanDistribution] = useState([])
   const [monthlyTrend, setMonthlyTrend] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Mock data - replace with API calls
-    const mockStats = {
-      totalStudents: 20,
-      activeStudents: 9,
-      pendingStudents: 3,
-      inactiveStudents: 5,
-      trialStudents: 3,
-      monthlyRevenue: 1250,
-      yearlyRevenue: 15000
+    const fetchStatisticsData = async () => {
+      try {
+        const [overviewData, statusData, planData, trendData] = await Promise.all([
+          statisticsAPI.getOverview(),
+          statisticsAPI.getStudentStatus(),
+          statisticsAPI.getPlanDistribution(),
+          statisticsAPI.getMonthlyTrend()
+        ])
+        
+        setStats(overviewData)
+        setPlanDistribution(planData)
+        setMonthlyTrend(trendData)
+      } catch (error) {
+        console.error('Error fetching statistics data:', error)
+        setError('Failed to load statistics')
+      } finally {
+        setLoading(false)
+      }
     }
 
-    const mockPlanDistribution = [
-      { name: '1 class/week (Adult)', value: 2, color: '#dc2626' },
-      { name: '2 classes/week (Adult)', value: 3, color: '#ea580c' },
-      { name: 'BJJ Unlimited', value: 2, color: '#d97706' },
-      { name: 'MMA Unlimited', value: 2, color: '#65a30d' },
-      { name: 'Budokon & Yoga', value: 2, color: '#059669' },
-      { name: 'All Unlimited', value: 1, color: '#0891b2' },
-      { name: '1 class/week (Kids)', value: 2, color: '#2563eb' },
-      { name: '2 classes/week (Kids)', value: 3, color: '#7c3aed' },
-      { name: 'Unlimited (Kids)', value: 3, color: '#be185d' }
-    ]
-
-    const mockMonthlyTrend = [
-      { month: 'Aug', students: 15, revenue: 1100 },
-      { month: 'Sep', students: 16, revenue: 1200 },
-      { month: 'Oct', students: 17, revenue: 1250 },
-      { month: 'Nov', students: 18, revenue: 1300 },
-      { month: 'Dec', students: 19, revenue: 1350 },
-      { month: 'Jan', students: 20, revenue: 1250 }
-    ]
-
-    setTimeout(() => {
-      setStats(mockStats)
-      setPlanDistribution(mockPlanDistribution)
-      setMonthlyTrend(mockMonthlyTrend)
-      setLoading(false)
-    }, 500)
+    fetchStatisticsData()
   }, [])
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+          <span className="text-red-800">{error}</span>
+        </div>
       </div>
     )
   }

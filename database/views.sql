@@ -11,8 +11,8 @@ SELECT
     s.first_name,
     s.last_name,
     CASE
-        -- Student paid current month
-        WHEN COALESCE(MAX(p.year * 12 + p.month), 0) =
+        -- Student paid current month OR future months
+        WHEN COALESCE(MAX(p.year * 12 + p.month), 0) >=
              (EXTRACT(YEAR FROM CURRENT_DATE)::INT * 12
               + EXTRACT(MONTH FROM CURRENT_DATE)::INT)
         THEN 'active'

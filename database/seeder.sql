@@ -1,17 +1,12 @@
 -- ==========================================================
 -- DATABASE SEEDER FOR MARTIAL ARTS ACADEMY
--- Date: 2026-01-28
--- Complete reset with ID counters restart
 -- ==========================================================
 
--- Disable foreign key constraints temporarily
-SET session_replication_role = replica;
-
--- Clear all data and reset ID counters
-TRUNCATE TABLE payments, students, plans, disciplines RESTART IDENTITY CASCADE;
-
--- Re-enable foreign key constraints
-SET session_replication_role = DEFAULT;
+-- Clear existing data (in correct order to respect foreign keys)
+DELETE FROM payments;
+DELETE FROM students;
+DELETE FROM plans;
+DELETE FROM disciplines;
 
 -- Insert disciplines
 INSERT INTO disciplines (name) VALUES 
@@ -26,7 +21,8 @@ INSERT INTO plans (name, price, type) VALUES
 ('2 classes per week', 70.00, 'adult'),
 ('BJJ Unlimited', 90.00, 'adult'),
 ('MMA Unlimited', 80.00, 'adult'),
-('Budokon and Yoga Unlimited', 50.00, 'adult'),
+('Budokon Unlimited', 50.00, 'adult'),
+('Yoga Unlimited', 50.00, 'adult'),
 ('All Unlimited', 98.00, 'adult');
 
 -- Insert plans for kids
@@ -35,207 +31,200 @@ INSERT INTO plans (name, price, type) VALUES
 ('2 classes per week', 65.00, 'kids'),
 ('Unlimited', 75.00, 'kids');
 
--- Verify plan IDs
-SELECT '=== PLAN IDs ===' as info;
-SELECT id, name, type, price FROM plans ORDER BY id;
-
--- Insert students - ensuring every plan combination is represented
+-- Insert students (20 students with different statuses)
 INSERT INTO students (first_name, last_name, email, type, enrollment_date) VALUES 
--- Adult students - each with different plans
-('John', 'Smith', 'john.smith@email.com', 'adult', '2025-01-15'),      -- Will use: 1 class per week
-('Maria', 'Garcia', 'maria.garcia@email.com', 'adult', '2025-02-20'),   -- Will use: 2 classes per week
-('David', 'Johnson', 'david.j@email.com', 'adult', '2025-03-10'),      -- Will use: BJJ Unlimited
-('Emma', 'Wilson', 'emma.w@email.com', 'adult', '2025-04-05'),         -- Will use: MMA Unlimited
-('Carlos', 'Rodriguez', 'carlos.r@email.com', 'adult', '2025-05-12'),   -- Will use: Budokon and Yoga Unlimited
-('Sophia', 'Chen', 'sophia.c@email.com', 'adult', '2025-06-18'),       -- Will use: All Unlimited
+-- Active students (paid current month)
+('John', 'Smith', 'john.smith@email.com', 'adult', '2023-01-15'),
+('Maria', 'Garcia', 'maria.garcia@email.com', 'adult', '2023-02-20'),
+('David', 'Johnson', 'david.j@email.com', 'adult', '2023-03-10'),
+('Emma', 'Wilson', 'emma.w@email.com', 'adult', '2023-04-05'),
+('Carlos', 'Rodriguez', 'carlos.r@email.com', 'adult', '2023-05-12'),
+('Lucas', 'Martin', 'lucas.m@email.com', 'kids', '2023-06-18'),
+('Sofia', 'Anderson', 'sofia.a@email.com', 'kids', '2023-07-22'),
+('Michael', 'Brown', 'michael.b@email.com', 'adult', '2023-08-14'),
 
--- Kids students - each with different plans
-('Lucas', 'Martin', 'lucas.m@email.com', 'kids', '2025-07-22'),        -- Will use: 1 class per week
-('Sofia', 'Anderson', 'sofia.a@email.com', 'kids', '2025-08-14'),      -- Will use: 2 classes per week
-('Michael', 'Brown', 'michael.b@email.com', 'kids', '2025-09-10'),     -- Will use: Unlimited
+-- Pending students (1-2 months behind)
+('Robert', 'Taylor', 'robert.t@email.com', 'adult', '2023-09-10'),
+('Ana', 'Martinez', 'ana.m@email.com', 'adult', '2023-10-15'),
+('James', 'Davis', 'james.d@email.com', 'adult', '2023-11-20'),
+('Olivia', 'Lopez', 'olivia.l@email.com', 'kids', '2023-12-05'),
 
--- Additional students for variety
-('Robert', 'Taylor', 'robert.t@email.com', 'adult', '2025-09-15'),     -- BJJ Unlimited - pending
-('Ana', 'Martinez', 'ana.m@email.com', 'adult', '2025-10-20'),          -- 2 classes per week - pending
-('James', 'Davis', 'james.d@email.com', 'adult', '2025-11-25'),         -- MMA Unlimited - inactive
-('Olivia', 'Lopez', 'olivia.l@email.com', 'kids', '2025-12-05'),       -- 2 classes per week - pending
-('William', 'Gonzalez', 'william.g@email.com', 'adult', '2025-01-08'), -- 1 class per week - inactive
-('Isabella', 'Perez', 'isabella.p@email.com', 'adult', '2025-02-12'),  -- Budokon and Yoga Unlimited - inactive
-('Daniel', 'Sanchez', 'daniel.s@email.com', 'adult', '2025-03-25'),     -- All Unlimited - inactive
-('Mia', 'Ramirez', 'mia.r@email.com', 'kids', '2025-04-30'),           -- 1 class per week - inactive
+-- Inactive students (3+ months behind)
+('William', 'Gonzalez', 'william.g@email.com', 'adult', '2023-01-08'),
+('Isabella', 'Perez', 'isabella.p@email.com', 'adult', '2023-02-12'),
+('Daniel', 'Sanchez', 'daniel.s@email.com', 'adult', '2023-03-25'),
+('Mia', 'Ramirez', 'mia.r@email.com', 'kids', '2023-04-30'),
 
--- Trial students (no payments yet)
+-- New students (recently enrolled)
+('Alexander', 'Cruz', 'alexander.c@email.com', 'adult', '2024-08-15'),
+('Emily', 'Torres', 'emily.t@email.com', 'adult', '2024-09-01'),
+('Ethan', 'Flores', 'ethan.f@email.com', 'kids', '2024-09-10'),
+
+-- Trial students (haven't paid yet)
 ('Liam', 'Walker', 'liam.w@email.com', 'adult', '2026-01-20'),
 ('Ava', 'Hall', 'ava.h@email.com', 'adult', '2026-01-22'),
 ('Noah', 'Young', 'noah.y@email.com', 'kids', '2026-01-25');
 
--- Verify student IDs
-SELECT '=== STUDENT IDs ===' as info;
-SELECT id, first_name, last_name, type FROM students ORDER BY id;
+-- Insert payments for active students (up to date)
+-- John Smith (ID: 1) - BJJ Unlimited - Active
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(1, 3, 6, 2024, '2024-06-01', 'paid'),
+(1, 3, 7, 2024, '2024-07-01', 'paid'),
+(1, 3, 8, 2024, '2024-08-01', 'paid'),
+(1, 3, 9, 2024, '2024-09-01', 'paid'),
+(1, 3, 10, 2024, '2024-10-01', 'paid'),
+(1, 3, 11, 2024, '2024-10-15', 'paid'),
+(1, 3, 12, 2024, '2024-10-15', 'paid'),
+(1, 3, 1, 2025, '2024-10-20', 'paid');
 
--- Insert payments - ensuring every plan is used and various payment scenarios
--- Plan IDs: 1=1class(adult), 2=2class(adult), 3=BJJ(adult), 4=MMA(adult), 5=BudokonYoga(adult), 6=All(adult), 7=1class(kids), 8=2class(kids), 9=Unlimited(kids)
+-- Maria Garcia (ID: 2) - Yoga Unlimited - Active
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(2, 6, 6, 2024, '2024-06-05', 'paid'),
+(2, 6, 7, 2024, '2024-07-05', 'paid'),
+(2, 6, 8, 2024, '2024-08-05', 'paid'),
+(2, 6, 9, 2024, '2024-09-05', 'paid'),
+(2, 6, 10, 2024, '2024-10-05', 'paid'),
+(2, 6, 11, 2024, '2024-10-10', 'paid');
 
--- John Smith (ID: 1) - 1 class per week (plan_id: 1) - ACTIVE with advance payments
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(1, 1, 9, 2025, '2025-09-01', 'paid', 'monthly'),
-(1, 1, 10, 2025, '2025-10-01', 'paid', 'monthly'),
-(1, 1, 11, 2025, '2025-11-01', 'paid', 'monthly'),
-(1, 1, 12, 2025, '2025-12-01', 'paid', 'monthly'),
-(1, 1, 1, 2026, '2026-01-01', 'paid', 'monthly'),
-(1, 1, 2, 2026, '2026-01-28', 'paid', 'advanced'),
-(1, 1, 3, 2026, '2026-01-28', 'paid', 'advanced'),
-(1, 1, 4, 2026, '2026-01-28', 'paid', 'advanced');
+-- David Johnson (ID: 3) - 2 classes per week - Active
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(3, 2, 6, 2024, '2024-06-10', 'paid'),
+(3, 2, 7, 2024, '2024-07-10', 'paid'),
+(3, 2, 8, 2024, '2024-08-10', 'paid'),
+(3, 2, 9, 2024, '2024-09-10', 'paid'),
+(3, 2, 10, 2024, '2024-10-10', 'paid'),
+(3, 2, 11, 2024, '2024-10-12', 'paid'),
+(3, 2, 12, 2024, '2024-10-12', 'paid');
 
--- Maria Garcia (ID: 2) - 2 classes per week (plan_id: 2) - ACTIVE
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(2, 2, 9, 2025, '2025-09-05', 'paid', 'monthly'),
-(2, 2, 10, 2025, '2025-10-05', 'paid', 'monthly'),
-(2, 2, 11, 2025, '2025-11-05', 'paid', 'monthly'),
-(2, 2, 12, 2025, '2025-12-05', 'paid', 'monthly'),
-(2, 2, 1, 2026, '2026-01-05', 'paid', 'monthly'),
-(2, 2, 2, 2026, '2026-01-25', 'paid', 'advanced');
+-- Emma Wilson (ID: 4) - All Unlimited - Active
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(4, 7, 6, 2024, '2024-06-15', 'paid'),
+(4, 7, 7, 2024, '2024-07-15', 'paid'),
+(4, 7, 8, 2024, '2024-08-15', 'paid'),
+(4, 7, 9, 2024, '2024-09-15', 'paid'),
+(4, 7, 10, 2024, '2024-10-15', 'paid'),
+(4, 7, 11, 2024, '2024-10-20', 'paid'),
+(4, 7, 12, 2024, '2024-10-20', 'paid'),
+(4, 7, 1, 2025, '2024-10-25', 'paid'),
+(4, 7, 2, 2025, '2024-10-25', 'paid'),
+(4, 7, 3, 2025, '2024-10-25', 'paid');
 
--- David Johnson (ID: 3) - BJJ Unlimited (plan_id: 3) - ACTIVE
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(3, 3, 9, 2025, '2025-09-10', 'paid', 'monthly'),
-(3, 3, 10, 2025, '2025-10-10', 'paid', 'monthly'),
-(3, 3, 11, 2025, '2025-11-10', 'paid', 'monthly'),
-(3, 3, 12, 2025, '2025-12-10', 'paid', 'monthly'),
-(3, 3, 1, 2026, '2026-01-10', 'paid', 'monthly'),
-(3, 3, 2, 2026, '2026-01-20', 'paid', 'advanced'),
-(3, 3, 3, 2026, '2026-01-20', 'paid', 'advanced');
+-- Carlos Rodriguez (ID: 5) - MMA Unlimited - Active
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(5, 4, 6, 2024, '2024-06-20', 'paid'),
+(5, 4, 7, 2024, '2024-07-20', 'paid'),
+(5, 4, 8, 2024, '2024-08-20', 'paid'),
+(5, 4, 9, 2024, '2024-09-20', 'paid'),
+(5, 4, 10, 2024, '2024-10-20', 'paid');
 
--- Emma Wilson (ID: 4) - MMA Unlimited (plan_id: 4) - ACTIVE with many advance payments
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(4, 4, 9, 2025, '2025-09-15', 'paid', 'monthly'),
-(4, 4, 10, 2025, '2025-10-15', 'paid', 'monthly'),
-(4, 4, 11, 2025, '2025-11-15', 'paid', 'monthly'),
-(4, 4, 12, 2025, '2025-12-15', 'paid', 'monthly'),
-(4, 4, 1, 2026, '2026-01-15', 'paid', 'monthly'),
-(4, 4, 2, 2026, '2026-01-20', 'paid', 'advanced'),
-(4, 4, 3, 2026, '2026-01-20', 'paid', 'advanced'),
-(4, 4, 4, 2026, '2026-01-20', 'paid', 'advanced'),
-(4, 4, 5, 2026, '2026-01-20', 'paid', 'advanced'),
-(4, 4, 6, 2026, '2026-01-20', 'paid', 'advanced');
+-- Lucas Martin (ID: 6) - Kids Unlimited - Active
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(6, 12, 6, 2024, '2024-06-25', 'paid'),
+(6, 12, 7, 2024, '2024-07-25', 'paid'),
+(6, 12, 8, 2024, '2024-08-25', 'paid'),
+(6, 12, 9, 2024, '2024-09-25', 'paid'),
+(6, 12, 10, 2024, '2024-10-25', 'paid'),
+(6, 12, 11, 2024, '2024-10-26', 'paid');
 
--- Carlos Rodriguez (ID: 5) - Budokon and Yoga Unlimited (plan_id: 5) - ACTIVE
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(5, 5, 9, 2025, '2025-09-20', 'paid', 'monthly'),
-(5, 5, 10, 2025, '2025-10-20', 'paid', 'monthly'),
-(5, 5, 11, 2025, '2025-11-20', 'paid', 'monthly'),
-(5, 5, 12, 2025, '2025-12-20', 'paid', 'monthly'),
-(5, 5, 1, 2026, '2026-01-20', 'paid', 'monthly');
+-- Sofia Anderson (ID: 7) - Kids 2 classes per week - Active
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(7, 11, 6, 2024, '2024-06-28', 'paid'),
+(7, 11, 7, 2024, '2024-07-28', 'paid'),
+(7, 11, 8, 2024, '2024-08-28', 'paid'),
+(7, 11, 9, 2024, '2024-09-28', 'paid'),
+(7, 11, 10, 2024, '2024-10-28', 'paid');
 
--- Sophia Chen (ID: 6) - All Unlimited (plan_id: 6) - ACTIVE
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(6, 6, 9, 2025, '2025-09-25', 'paid', 'monthly'),
-(6, 6, 10, 2025, '2025-10-25', 'paid', 'monthly'),
-(6, 6, 11, 2025, '2025-11-25', 'paid', 'monthly'),
-(6, 6, 12, 2025, '2025-12-25', 'paid', 'monthly'),
-(6, 6, 1, 2026, '2026-01-25', 'paid', 'monthly'),
-(6, 6, 2, 2026, '2026-01-26', 'paid', 'advanced'),
-(6, 6, 3, 2026, '2026-01-26', 'paid', 'advanced');
-
--- Lucas Martin (ID: 7) - Kids 1 class per week (plan_id: 7) - ACTIVE
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(7, 7, 9, 2025, '2025-09-28', 'paid', 'monthly'),
-(7, 7, 10, 2025, '2025-10-28', 'paid', 'monthly'),
-(7, 7, 11, 2025, '2025-11-28', 'paid', 'monthly'),
-(7, 7, 12, 2025, '2025-12-28', 'paid', 'monthly'),
-(7, 7, 1, 2026, '2026-01-28', 'paid', 'monthly');
-
--- Sofia Anderson (ID: 8) - Kids 2 classes per week (plan_id: 8) - ACTIVE
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(8, 8, 9, 2025, '2025-09-30', 'paid', 'monthly'),
-(8, 8, 10, 2025, '2025-10-30', 'paid', 'monthly'),
-(8, 8, 11, 2025, '2025-11-30', 'paid', 'monthly'),
-(8, 8, 12, 2025, '2025-12-30', 'paid', 'monthly'),
-(8, 8, 1, 2026, '2026-01-30', 'paid', 'monthly'),
-(8, 8, 2, 2026, '2026-01-30', 'paid', 'advanced');
-
--- Michael Brown (ID: 9) - Kids Unlimited (plan_id: 9) - ACTIVE
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(9, 9, 9, 2025, '2025-09-01', 'paid', 'monthly'),
-(9, 9, 10, 2025, '2025-10-01', 'paid', 'monthly'),
-(9, 9, 11, 2025, '2025-11-01', 'paid', 'monthly'),
-(9, 9, 12, 2025, '2025-12-01', 'paid', 'monthly'),
-(9, 9, 1, 2026, '2026-01-01', 'paid', 'monthly'),
-(9, 9, 2, 2026, '2026-01-15', 'paid', 'advanced'),
-(9, 9, 3, 2026, '2026-01-15', 'paid', 'advanced');
+-- Michael Brown (ID: 8) - 1 class per week - Active
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(8, 1, 6, 2024, '2024-06-30', 'paid'),
+(8, 1, 7, 2024, '2024-07-30', 'paid'),
+(8, 1, 8, 2024, '2024-08-30', 'paid'),
+(8, 1, 9, 2024, '2024-09-30', 'paid'),
+(8, 1, 10, 2024, '2024-10-30', 'paid');
 
 -- Pending Students (1-2 months behind)
--- Robert Taylor (ID: 10) - BJJ Unlimited (plan_id: 3) - Last paid November 2025 (2 months behind)
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(10, 3, 9, 2025, '2025-09-01', 'paid', 'monthly'),
-(10, 3, 10, 2025, '2025-10-01', 'paid', 'monthly'),
-(10, 3, 11, 2025, '2025-11-01', 'paid', 'monthly');
+-- Robert Taylor (ID: 9) - Last paid August (2 months behind)
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(9, 5, 6, 2024, '2024-06-01', 'paid'),
+(9, 5, 7, 2024, '2024-07-01', 'paid'),
+(9, 5, 8, 2024, '2024-08-01', 'paid');
 
--- Ana Martinez (ID: 11) - 2 classes per week (plan_id: 2) - Last paid December 2025 (1 month behind)
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(11, 2, 9, 2025, '2025-09-05', 'paid', 'monthly'),
-(11, 2, 10, 2025, '2025-10-05', 'paid', 'monthly'),
-(11, 2, 11, 2025, '2025-11-05', 'paid', 'monthly'),
-(11, 2, 12, 2025, '2025-12-05', 'paid', 'monthly');
+-- Ana Martinez (ID: 10) - Last paid September (1 month behind)
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(10, 2, 6, 2024, '2024-06-05', 'paid'),
+(10, 2, 7, 2024, '2024-07-05', 'paid'),
+(10, 2, 8, 2024, '2024-08-05', 'paid'),
+(10, 2, 9, 2024, '2024-09-05', 'paid');
+
+-- James Davis (ID: 11) - Last paid August (2 months behind)
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(11, 3, 6, 2024, '2024-06-10', 'paid'),
+(11, 3, 7, 2024, '2024-07-10', 'paid'),
+(11, 3, 8, 2024, '2024-08-10', 'paid');
+
+-- Olivia Lopez (ID: 12) - Last paid September (1 month behind)
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(12, 10, 6, 2024, '2024-06-15', 'paid'),
+(12, 10, 7, 2024, '2024-07-15', 'paid'),
+(12, 10, 8, 2024, '2024-08-15', 'paid'),
+(12, 10, 9, 2024, '2024-09-15', 'paid');
 
 -- Inactive Students (3+ months behind)
--- James Davis (ID: 12) - MMA Unlimited (plan_id: 4) - Last paid August 2025 (5+ months behind)
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(12, 4, 8, 2025, '2025-08-10', 'paid', 'monthly'),
-(12, 4, 9, 2025, '2025-09-10', 'paid', 'monthly');
+-- William Gonzalez (ID: 13) - Last paid July (3+ months behind)
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(13, 1, 6, 2024, '2024-06-01', 'paid'),
+(13, 1, 7, 2024, '2024-07-01', 'paid');
 
--- Olivia Lopez (ID: 13) - Kids 2 classes per week (plan_id: 8) - Last paid December 2025 (1 month behind)
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(13, 8, 9, 2025, '2025-09-15', 'paid', 'monthly'),
-(13, 8, 10, 2025, '2025-10-15', 'paid', 'monthly'),
-(13, 8, 11, 2025, '2025-11-15', 'paid', 'monthly'),
-(13, 8, 12, 2025, '2025-12-15', 'paid', 'monthly');
+-- Isabella Perez (ID: 14) - Last paid June (4+ months behind)
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(14, 2, 6, 2024, '2024-06-05', 'paid');
 
--- William Gonzalez (ID: 14) - 1 class per week (plan_id: 1) - Last paid October 2025 (3+ months behind)
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(14, 1, 9, 2025, '2025-09-01', 'paid', 'monthly'),
-(14, 1, 10, 2025, '2025-10-01', 'paid', 'monthly');
+-- Daniel Sanchez (ID: 15) - Last paid May (5+ months behind)
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(15, 3, 5, 2024, '2024-05-10', 'paid'),
+(15, 3, 6, 2024, '2024-06-10', 'paid');
 
--- Isabella Perez (ID: 15) - Budokon and Yoga Unlimited (plan_id: 5) - Last paid September 2025 (4+ months behind)
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(15, 5, 9, 2025, '2025-09-05', 'paid', 'monthly');
+-- Mia Ramirez (ID: 16) - Last paid July (3+ months behind)
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(16, 11, 6, 2024, '2024-06-20', 'paid'),
+(16, 11, 7, 2024, '2024-07-20', 'paid');
 
--- Daniel Sanchez (ID: 16) - All Unlimited (plan_id: 6) - Last paid July 2025 (6+ months behind)
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(16, 6, 7, 2025, '2025-07-25', 'paid', 'monthly'),
-(16, 6, 8, 2025, '2025-08-25', 'paid', 'monthly');
+-- New Students (recent payments)
+-- Alexander Cruz (ID: 17) - Started August
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(17, 4, 8, 2024, '2024-08-15', 'paid'),
+(17, 4, 9, 2024, '2024-09-15', 'paid'),
+(17, 4, 10, 2024, '2024-10-15', 'paid');
 
--- Mia Ramirez (ID: 17) - Kids 1 class per week (plan_id: 7) - Last paid October 2025 (3+ months behind)
-INSERT INTO payments (student_id, plan_id, month, year, payment_date, status, source) VALUES 
-(17, 7, 9, 2025, '2025-09-20', 'paid', 'monthly'),
-(17, 7, 10, 2025, '2025-10-20', 'paid', 'monthly');
+-- Emily Torres (ID: 18) - Started September
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(18, 5, 9, 2024, '2024-09-01', 'paid'),
+(18, 5, 10, 2024, '2024-10-01', 'paid');
 
--- Trial students (NO PAYMENTS - came to try classes)
--- Liam Walker (ID: 18) - Trial, no payments yet
--- Ava Hall (ID: 19) - Trial, no payments yet  
--- Noah Young (ID: 20) - Trial, no payments yet
+-- Ethan Flores (ID: 19) - Started September
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(19, 12, 9, 2024, '2024-09-10', 'paid'),
+(19, 12, 10, 2024, '2024-10-10', 'paid');
 
--- Display comprehensive summary
-SELECT '=== DATABASE SEEDED SUCCESSFULLY ===' as message;
+-- Future payments (3 months ahead)
+-- Some students with advance payments
+INSERT INTO payments (student_id, plan_id, month, year, payment_date, status) VALUES 
+(1, 3, 2, 2025, '2024-10-20', 'paid'),
+(1, 3, 3, 2025, '2024-10-20', 'paid'),
+(4, 7, 4, 2025, '2024-10-25', 'paid'),
+(4, 7, 5, 2025, '2024-10-25', 'paid'),
+(6, 12, 12, 2024, '2024-10-26', 'paid'),
+(6, 12, 1, 2025, '2024-10-26', 'paid'),
+(6, 12, 2, 2025, '2024-10-26', 'paid');
+
+-- Display summary
+SELECT 'Database seeded successfully!' as message;
 SELECT 'Disciplines:' as info, COUNT(*) as count FROM disciplines;
 SELECT 'Plans:' as info, COUNT(*) as count FROM plans;
 SELECT 'Students:' as info, COUNT(*) as count FROM students;
 SELECT 'Payments:' as info, COUNT(*) as count FROM payments;
 
--- Show payment source distribution
-SELECT '=== PAYMENT SOURCE DISTRIBUTION ===' as info;
-SELECT source, COUNT(*) as count FROM payments GROUP BY source ORDER BY source;
-
--- Show plan usage distribution
-SELECT '=== PLAN USAGE DISTRIBUTION ===' as info;
-SELECT p.name as plan_name, p.type, COUNT(pa.id) as payment_count
-FROM plans p
-LEFT JOIN payments pa ON p.id = pa.plan_id
-GROUP BY p.id, p.name, p.type
-ORDER BY p.type, p.name;
-
 -- Show student status distribution
-SELECT '=== STUDENT STATUS DISTRIBUTION ===' as info;
 SELECT 
     student_status,
     COUNT(*) as student_count,
@@ -243,11 +232,3 @@ SELECT
 FROM student_current_status
 GROUP BY student_status
 ORDER BY student_status;
-
--- Show trial students (no payments)
-SELECT '=== TRIAL STUDENTS (NO PAYMENTS) ===' as info;
-SELECT s.id, s.first_name, s.last_name, s.type, s.enrollment_date
-FROM students s
-LEFT JOIN payments p ON s.id = p.student_id
-WHERE p.id IS NULL
-ORDER BY s.enrollment_date DESC;

@@ -26,8 +26,16 @@
     @apply bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500;
   }
   
+  .btn-success {
+    @apply bg-success-600 text-white hover:bg-success-700 focus:ring-success-500;
+  }
+  
+  .btn-warning {
+    @apply bg-warning-600 text-white hover:bg-warning-700 focus:ring-warning-500;
+  }
+  
   .btn-danger {
-    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+    @apply bg-danger-600 text-white hover:bg-danger-700 focus:ring-danger-500;
   }
   
   .card {

@@ -1,110 +1,38 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, Filter, User, Calendar, AlertCircle } from 'lucide-react'
+import { studentsAPI } from '../services/api'
 
 const StudentSearch = () => {
   const [students, setStudents] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockStudents = [
-      { 
-        id: 1, 
-        firstName: 'John', 
-        lastName: 'Smith', 
-        email: 'john.smith@email.com', 
-        type: 'adult', 
-        status: 'active',
-        enrollmentDate: '2025-01-15',
-        plan: '1 class per week',
-        lastPayment: '2026-01-01'
-      },
-      { 
-        id: 2, 
-        firstName: 'Maria', 
-        lastName: 'Garcia', 
-        email: 'maria.garcia@email.com', 
-        type: 'adult', 
-        status: 'active',
-        enrollmentDate: '2025-02-20',
-        plan: '2 classes per week',
-        lastPayment: '2026-01-05'
-      },
-      { 
-        id: 10, 
-        firstName: 'Robert', 
-        lastName: 'Taylor', 
-        email: 'robert.t@email.com', 
-        type: 'adult', 
-        status: 'pending',
-        enrollmentDate: '2025-09-10',
-        plan: 'BJJ Unlimited',
-        lastPayment: '2025-11-01',
-        amountDue: 90
-      },
-      { 
-        id: 11, 
-        firstName: 'Ana', 
-        lastName: 'Martinez', 
-        email: 'ana.m@email.com', 
-        type: 'adult', 
-        status: 'pending',
-        enrollmentDate: '2025-10-15',
-        plan: '2 classes per week',
-        lastPayment: '2025-12-05',
-        amountDue: 70
-      },
-      { 
-        id: 12, 
-        firstName: 'James', 
-        lastName: 'Davis', 
-        email: 'james.d@email.com', 
-        type: 'adult', 
-        status: 'inactive',
-        enrollmentDate: '2025-11-20',
-        plan: 'MMA Unlimited',
-        lastPayment: '2025-09-10'
-      },
-      { 
-        id: 13, 
-        firstName: 'Olivia', 
-        lastName: 'Lopez', 
-        email: 'olivia.l@email.com', 
-        type: 'kids', 
-        status: 'pending',
-        enrollmentDate: '2025-12-05',
-        plan: '2 classes per week',
-        lastPayment: '2025-12-15',
-        amountDue: 65
-      },
-      { 
-        id: 20, 
-        firstName: 'Liam', 
-        lastName: 'Walker', 
-        email: 'liam.w@email.com', 
-        type: 'adult', 
-        status: 'trial',
-        enrollmentDate: '2026-01-20',
-        plan: 'Trial',
-        lastPayment: null
+    const fetchStudents = async () => {
+      try {
+        const data = await studentsAPI.getAll()
+        setStudents(data)
+      } catch (error) {
+        console.error('Error fetching students:', error)
+        setError('Failed to load students')
+      } finally {
+        setLoading(false)
       }
-    ]
+    }
 
-    setTimeout(() => {
-      setStudents(mockStudents)
-      setLoading(false)
-    }, 500)
+    fetchStudents()
   }, [])
 
   const filteredStudents = students.filter(student => {
-    const matchesSearch = student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         student.email.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = 
+      (student.first_name && student.first_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (student.last_name && student.last_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (student.email && student.email.toLowerCase().includes(searchTerm.toLowerCase()))
     
-    const matchesFilter = filterStatus === 'all' || student.status === filterStatus
+    const matchesFilter = filterStatus === 'all' || student.student_status === filterStatus
     
     return matchesSearch && matchesFilter
   })
@@ -132,6 +60,17 @@ const StudentSearch = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-center">
+          <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+          <span className="text-red-800">{error}</span>
+        </div>
       </div>
     )
   }
@@ -217,18 +156,13 @@ const StudentSearch = () => {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 group-hover:text-primary-700 transition-colors">
-                    {student.firstName} {student.lastName}
-                  </h3>
-                  <p className="text-sm text-gray-600">{student.email}</p>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(student.status)}`}>
-                      {student.status}
-                    </span>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(student.type)}`}>
-                      {student.type}
-                    </span>
+                  <div className="font-medium text-gray-900">
+                    {student.first_name} {student.last_name}
                   </div>
+                  <div className="text-sm text-gray-500">{student.email}</div>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(student.student_status)} mt-1`}>
+                    {student.student_status}
+                  </span>
                 </div>
               </div>
               <div className="text-right">
