@@ -1,50 +1,42 @@
 import db from '../config/database.js';
 
 export const getStudentsWithStatus = async () => {
+  // Simple query - all data is now in the students table
   const query = `
     SELECT 
-      s.*,
-      scs.student_status,
-      COALESCE(pl.name, 'No plan') as plan_name,
-      COALESCE(pl.price, 0) as price,
-      MAX(p.payment_date) as last_payment_date
-    FROM students s
-    LEFT JOIN student_current_status scs ON s.id = scs.id
-    LEFT JOIN payments p ON p.student_id = s.id
-    LEFT JOIN plans pl ON pl.id = (
-      SELECT p.plan_id 
-      FROM payments p 
-      WHERE p.student_id = s.id 
-      ORDER BY p.year DESC, p.month DESC 
-      LIMIT 1
-    )
-    GROUP BY s.id, scs.student_status, pl.name, pl.price
-    ORDER BY s.first_name, s.last_name
+      id,
+      first_name,
+      last_name,
+      email,
+      type,
+      enrollment_date,
+      student_status,
+      plan_name,
+      price,
+      last_payment_date
+    FROM students 
+    ORDER BY first_name, last_name
   `;
   const { rows } = await db.query(query);
   return rows;
 };
 
 export const getStudentById = async (id) => {
+  // Simple query - all data is now in the students table
   const query = `
     SELECT 
-      s.*,
-      scs.student_status,
-      COALESCE(pl.name, 'No plan') as plan_name,
-      COALESCE(pl.price, 0) as price,
-      MAX(p.payment_date) as last_payment_date
-    FROM students s
-    LEFT JOIN student_current_status scs ON s.id = scs.id
-    LEFT JOIN payments p ON p.student_id = s.id
-    LEFT JOIN plans pl ON pl.id = (
-      SELECT p.plan_id 
-      FROM payments p 
-      WHERE p.student_id = s.id 
-      ORDER BY p.year DESC, p.month DESC 
-      LIMIT 1
-    )
-    WHERE s.id = $1
-    GROUP BY s.id, scs.student_status, pl.name, pl.price
+      id,
+      first_name,
+      last_name,
+      email,
+      type,
+      enrollment_date,
+      student_status,
+      plan_name,
+      price,
+      last_payment_date
+    FROM students 
+    WHERE id = $1
   `;
   const { rows } = await db.query(query, [id]);
   return rows[0];
@@ -90,7 +82,24 @@ export const getStudentsByStatus = async (status) => {
 };
 
 export const getInactiveStudents = async () => {
-  const query = 'SELECT * FROM inactive_students';
-  const { rows } = await db.query(query);
+  // Simple query using the new student_status column
+  const query = 'SELECT * FROM students WHERE student_status = $1';
+  const { rows } = await db.query(query, ['inactive']);
   return rows;
+};
+
+export const getStudentsWithPendingPayments = async (limit = 3) => {
+  // Use the simplified function
+  const query = 'SELECT * FROM get_top_pending_students($1)';
+  const { rows } = await db.query(query, [limit]);
+  
+  // The function already returns the correct format
+  return rows;
+};
+
+export const getPendingPaymentsCount = async () => {
+  // Use the simplified function
+  const query = 'SELECT get_pending_payments_count() as count';
+  const { rows } = await db.query(query);
+  return parseInt(rows[0].count);
 };

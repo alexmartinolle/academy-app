@@ -42,13 +42,15 @@ export const dashboardAPI = {
 
 // Students API
 export const studentsAPI = {
-  getAll: (params = {}) => api.get('/students', { params }),
+  getAll: () => api.get('/students'),
   getById: (id) => api.get(`/students/${id}`),
   create: (data) => api.post('/students', data),
   update: (id, data) => api.put(`/students/${id}`, data),
   delete: (id) => api.delete(`/students/${id}`),
   getByStatus: (status) => api.get(`/students/status/${status}`),
   getInactive: () => api.get('/students/inactive'),
+  getPendingPayments: (limit = 3) => api.get('/students/pending-payments', { params: { limit } }),
+  getPendingPaymentsCount: () => api.get('/students/pending-payments/stats'),
 }
 
 // Payments API

@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Users, AlertCircle, TrendingUp, DollarSign, Calendar } from 'lucide-react'
-import { dashboardAPI } from '../services/api'
+import { Search, Users, AlertCircle, TrendingUp, DollarSign, Calendar, Plus, User } from 'lucide-react'
+import { dashboardAPI, studentsAPI, paymentsAPI } from '../services/api'
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
     totalStudents: 0,
     activeStudents: 0,
     pendingPayments: 0,
-    monthlyRevenue: 0
+    inactiveStudents: 0
   })
   const [pendingStudents, setPendingStudents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -17,19 +17,28 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [statsData, distributionData] = await Promise.all([
-          dashboardAPI.getStats(),
-          dashboardAPI.getStudentDistribution()
+        // Fetch data in parallel using BBDD endpoints
+        const [studentsData, pendingPaymentsStats, pendingPaymentsList] = await Promise.all([
+          studentsAPI.getAll(),
+          studentsAPI.getPendingPaymentsCount(),
+          studentsAPI.getPendingPayments(3)
         ])
         
-        setStats(statsData)
+        // Calculate basic stats from students data
+        const totalStudents = studentsData.length
+        const activeStudents = studentsData.filter(s => s.student_status === 'active').length
+        const inactiveStudents = studentsData.filter(s => s.student_status === 'inactive').length
         
-        // Get pending students from distribution or create from stats
-        const pendingStudents = distributionData.find(s => s.status === 'pending')?.students || []
-        setPendingStudents(pendingStudents)
+        setStats({
+          totalStudents,
+          activeStudents,
+          pendingPayments: pendingPaymentsStats.count,
+          inactiveStudents
+        })
+        
+        setPendingStudents(pendingPaymentsList)
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
-        // Show error state instead of fallback mock data
         setError('Failed to load dashboard data')
       } finally {
         setLoading(false)
@@ -107,18 +116,18 @@ const Dashboard = () => {
         <div className="card">
           <div className="flex items-center">
             <div className="flex-shrink-0 bg-blue-100 rounded-lg p-3">
-              <DollarSign className="h-6 w-6 text-blue-600" />
+              <User className="h-6 w-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-              <p className="text-2xl font-bold text-gray-900">€{stats.monthlyRevenue}</p>
+              <p className="text-sm font-medium text-gray-600">Inactive Students</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.inactiveStudents}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Search Student */}
         <Link to="/students" className="card hover:shadow-red transition-shadow cursor-pointer group">
           <div className="flex items-center space-x-4">
@@ -134,8 +143,23 @@ const Dashboard = () => {
           </div>
         </Link>
 
+        {/* Add Student */}
+        <Link to="/students/new" className="card hover:shadow-red transition-shadow cursor-pointer group">
+          <div className="flex items-center space-x-4">
+            <div className="flex-shrink-0 bg-green-100 rounded-lg p-3 group-hover:bg-green-200 transition-colors">
+              <Plus className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 group-hover:text-green-700 transition-colors">
+                Add Student
+              </h3>
+              <p className="text-sm text-gray-600">Create a new student account</p>
+            </div>
+          </div>
+        </Link>
+
         {/* Pending Payments */}
-        <div className="card">
+        <div className="card lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Pending Payments</h3>
             <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">
@@ -143,15 +167,35 @@ const Dashboard = () => {
             </span>
           </div>
           <div className="space-y-3">
-            {pendingStudents.slice(0, 3).map((student) => (
-              <div key={student.id} className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{student.name}</p>
-                  <p className="text-xs text-gray-500">{student.daysLate} days late</p>
-                </div>
-                <span className="text-sm font-semibold text-gray-900">€{student.amount}</span>
+            {pendingStudents.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                <p className="text-sm">No pending payments</p>
+                <p className="text-xs text-gray-400">All students are up to date!</p>
               </div>
-            ))}
+            ) : (
+              pendingStudents.map((student) => (
+                <Link
+                  key={student.id}
+                  to={`/students/${student.id}`}
+                  className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:border-yellow-300 hover:bg-yellow-50 transition-colors cursor-pointer group"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center group-hover:bg-yellow-100 transition-colors">
+                      <User className="h-4 w-4 text-gray-600 group-hover:text-yellow-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 group-hover:text-yellow-700">{student.name}</p>
+                      <p className="text-xs text-gray-500">{student.daysLate} days late</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm font-semibold text-gray-900 group-hover:text-yellow-700">€{student.amount}</span>
+                    <p className="text-xs text-gray-500">Click to view →</p>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
           <Link 
             to="/students" 
@@ -159,37 +203,6 @@ const Dashboard = () => {
           >
             View all pending payments →
           </Link>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
-            <Calendar className="h-5 w-5 text-gray-400" />
-          </div>
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-              <div>
-                <p className="text-sm text-gray-900">New student enrolled</p>
-                <p className="text-xs text-gray-500">Liam Walker - 2 hours ago</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-              <div>
-                <p className="text-sm text-gray-900">Payment received</p>
-                <p className="text-xs text-gray-500">Maria Garcia - 5 hours ago</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
-              <div>
-                <p className="text-sm text-gray-900">Payment overdue</p>
-                <p className="text-xs text-gray-500">Robert Taylor - 1 day ago</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

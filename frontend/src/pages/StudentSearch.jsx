@@ -17,30 +17,26 @@ const StudentSearch = () => {
       try {
         const studentsData = await studentsAPI.getAll()
         
-        // Fetch payments for each student
+        // Fetch payments for each student to get last payment info
         const studentsWithPaymentInfo = await Promise.all(
           studentsData.map(async (student) => {
             try {
               const payments = await paymentsAPI.getByStudent(student.id)
               const paidPayments = payments.filter(p => p.status === 'paid')
               
-              // Get the most recent payment
-              const lastPayment = paidPayments.length > 0 
-                ? paidPayments.reduce((latest, payment) => {
-                    const paymentDate = new Date(payment.year, payment.month - 1)
-                    const latestDate = new Date(latest.year, latest.month - 1)
-                    return paymentDate > latestDate ? payment : latest
-                  }, paidPayments[0])
-                : null
+              // Find the last paid payment
+              let lastPayment = null
+              if (paidPayments.length > 0) {
+                lastPayment = paidPayments.reduce((latest, payment) => {
+                  const latestDate = new Date(latest.year, latest.month - 1)
+                  const paymentDate = new Date(payment.year, payment.month - 1)
+                  return paymentDate > latestDate ? payment : latest
+                }, paidPayments[0])
+              }
               
               return {
                 ...student,
-                lastPayment: lastPayment ? {
-                  date: lastPayment.payment_date,
-                  month: lastPayment.month,
-                  year: lastPayment.year,
-                  amount: lastPayment.price || lastPayment.amount
-                } : null
+                lastPayment: lastPayment
               }
             } catch (error) {
               console.error(`Error fetching payments for student ${student.id}:`, error)

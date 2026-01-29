@@ -5,7 +5,9 @@ import {
   updateStudent,
   deleteStudent,
   getStudentsByStatus,
-  getInactiveStudents
+  getInactiveStudents,
+  getStudentsWithPendingPayments,
+  getPendingPaymentsCount
 } from '../repositories/students.repository.js';
 
 export const getAllStudents = async (req, res) => {
@@ -85,6 +87,36 @@ export const getInactiveStudentsList = async (req, res) => {
   try {
     const students = await getInactiveStudents();
     res.json(students);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getPendingPaymentsList = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 3;
+    const students = await getStudentsWithPendingPayments(limit);
+    
+    // Formatear los datos para el frontend
+    const formattedStudents = students.map(student => ({
+      id: student.id,
+      name: `${student.first_name} ${student.last_name}`,
+      email: student.email,
+      daysLate: Math.max(0, student.days_late),
+      amount: student.price,
+      currentStatus: student.student_status
+    }));
+    
+    res.json(formattedStudents);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getPendingPaymentsStats = async (req, res) => {
+  try {
+    const count = await getPendingPaymentsCount();
+    res.json({ count });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
