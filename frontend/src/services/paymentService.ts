@@ -1,5 +1,5 @@
-import api from './api';
-import { Payment, PaymentFilters, PaginatedResponse, CreatePaymentRequest } from '../types';
+import { apiClient } from './api';
+import { PaginatedResponse, Payment, PaymentFilters, CreatePaymentRequest } from '../types';
 
 class PaymentService {
   // Get all payments with pagination and filters
@@ -17,12 +17,12 @@ class PaymentService {
       ...(filters?.max_amount && { max_amount: filters.max_amount }),
     };
 
-    return api.getPaginated<Payment>('/payments', params);
+    return apiClient.getPaginated<Payment>('/payments', params);
   }
 
   // Get payment by ID
   async getPaymentById(id: number): Promise<Payment> {
-    const response = await api.get<Payment>(`/payments/${id}`);
+    const response = await apiClient.get<Payment>(`/payments/${id}`);
     if (response.success && response.data) {
       return response.data;
     }
@@ -31,7 +31,7 @@ class PaymentService {
 
   // Create new payment
   async createPayment(paymentData: CreatePaymentRequest): Promise<Payment> {
-    const response = await api.post<Payment>('/payments', paymentData);
+    const response = await apiClient.post<Payment>('/payments', paymentData);
     if (response.success && response.data) {
       return response.data;
     }
@@ -40,7 +40,7 @@ class PaymentService {
 
   // Get student payment history
   async getStudentPaymentHistory(studentId: number): Promise<Payment[]> {
-    const response = await api.get<Payment[]>(`/payments/student/${studentId}`);
+    const response = await apiClient.get<Payment[]>(`/payments/student/${studentId}`);
     if (response.success && response.data) {
       return response.data;
     }
@@ -49,7 +49,7 @@ class PaymentService {
 
   // Get payment methods summary
   async getPaymentMethodsSummary(): Promise<any[]> {
-    const response = await api.get<any[]>('/payments/methods/summary');
+    const response = await apiClient.get<any[]>('/payments/methods/summary');
     if (response.success && response.data) {
       return response.data;
     }
@@ -63,7 +63,7 @@ class PaymentService {
       ...(dateTo && { date_to: dateTo }),
     };
 
-    const response = await api.get<any[]>('/payments/revenue/daily', params);
+    const response = await apiClient.get<any[]>('/payments/revenue/daily', params);
     if (response.success && response.data) {
       return response.data;
     }
@@ -77,7 +77,7 @@ class PaymentService {
       ...(dateTo && { date_to: dateTo }),
     };
 
-    const response = await api.get<any[]>('/payments/revenue/monthly', params);
+    const response = await apiClient.get<any[]>('/payments/revenue/monthly', params);
     if (response.success && response.data) {
       return response.data;
     }

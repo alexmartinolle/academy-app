@@ -1,10 +1,10 @@
-import api from './api';
+import { apiClient } from './api';
 import { DashboardStats } from '../types';
 
 class StatsService {
   // Get dashboard KPIs
   async getDashboardStats(): Promise<DashboardStats> {
-    const response = await api.get<DashboardStats>('/stats/dashboard');
+    const response = await apiClient.get<DashboardStats>('/stats/dashboard');
     if (response.success && response.data) {
       return response.data;
     }
@@ -20,7 +20,7 @@ class StatsService {
       ...(groupBy && { group_by: groupBy }),
     };
 
-    const response = await api.get<any[]>('/stats/revenue', params);
+    const response = await apiClient.get<any[]>('/stats/revenue', params);
     if (response.success && response.data) {
       return response.data;
     }
@@ -34,7 +34,7 @@ class StatsService {
       ...(groupBy && { group_by: groupBy }),
     };
 
-    const response = await api.get<any[]>('/stats/students', params);
+    const response = await apiClient.get<any[]>('/stats/students', params);
     if (response.success && response.data) {
       return response.data;
     }
@@ -49,7 +49,7 @@ class StatsService {
       ...(dateTo && { date_to: dateTo }),
     };
 
-    const response = await api.get<any[]>('/stats/growth', params);
+    const response = await apiClient.get<any[]>('/stats/growth', params);
     if (response.success && response.data) {
       return response.data;
     }
@@ -58,7 +58,7 @@ class StatsService {
 
   // Get plan distribution statistics
   async getPlanStats(): Promise<any[]> {
-    const response = await api.get<any[]>('/stats/plans');
+    const response = await apiClient.get<any[]>('/stats/plans');
     if (response.success && response.data) {
       return response.data;
     }
@@ -67,7 +67,7 @@ class StatsService {
 
   // Get modality statistics
   async getModalityStats(): Promise<any[]> {
-    const response = await api.get<any[]>('/stats/modalities');
+    const response = await apiClient.get<any[]>('/stats/modalities');
     if (response.success && response.data) {
       return response.data;
     }
@@ -76,7 +76,7 @@ class StatsService {
 
   // Get cohort retention analysis
   async getRetentionStats(): Promise<any[]> {
-    const response = await api.get<any[]>('/stats/retention');
+    const response = await apiClient.get<any[]>('/stats/retention');
     if (response.success && response.data) {
       return response.data;
     }
@@ -85,7 +85,7 @@ class StatsService {
 
   // Get payment method statistics
   async getPaymentStats(): Promise<any[]> {
-    const response = await api.get<any[]>('/stats/payments');
+    const response = await apiClient.get<any[]>('/stats/payments');
     if (response.success && response.data) {
       return response.data;
     }

@@ -10,6 +10,7 @@ import './styles/globals.css';
 import Layout from './components/common/Layout';
 import Dashboard from './pages/Dashboard';
 import StudentsList from './pages/StudentsList';
+import StudentDetails from './pages/StudentDetails';
 import PlansList from './pages/PlansList';
 import PaymentsList from './pages/PaymentsList';
 import ModalitiesList from './pages/ModalitiesList';
@@ -40,6 +41,7 @@ function App() {
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="students" element={<StudentsList />} />
+              <Route path="students/:id" element={<StudentDetails />} />
               <Route path="plans" element={<PlansList />} />
               <Route path="payments" element={<PaymentsList />} />
               <Route path="modalities" element={<ModalitiesList />} />

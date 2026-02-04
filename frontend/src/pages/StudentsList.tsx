@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import {
-  MagnifyingGlassIcon,
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  EyeIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
-import studentService from '../services/studentService';
-import { formatDate, getStatusBadgeClass, getStatusText, getStudentTypeText } from '../utils/formatters';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { PlusIcon, EyeIcon, PencilIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { formatDate, formatRelativeTime, formatCurrency, getStudentTypeText, getStatusBadgeClass, getStatusText } from '../utils/formatters';
 import { Student, StudentFilters } from '../types';
+import studentService from '../services/studentService';
+import StudentModal from '../components/modals/StudentModal';
+import StudentDetailsModal from '../components/modals/StudentDetailsModal';
+import DeleteConfirmModal from '../components/modals/DeleteConfirmModal';
 
 const StudentsList: React.FC = () => {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<StudentFilters>({
     page: 1,
     limit: 10,
@@ -20,9 +18,31 @@ const StudentsList: React.FC = () => {
     sort_order: 'asc',
   });
 
+  // Modal states
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
+  const queryClient = useQueryClient();
+
   const { data: studentsData, isLoading, error } = useQuery({
     queryKey: ['students', filters],
     queryFn: () => studentService.getStudents(filters),
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: studentService.deleteStudent,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+      setIsDeleteModalOpen(false);
+      setSelectedStudent(null);
+    },
+    onError: (error: any) => {
+      console.error('Failed to delete student:', error);
+    },
   });
 
   const handleSearch = (search: string) => {
@@ -35,6 +55,36 @@ const StudentsList: React.FC = () => {
 
   const handlePageChange = (page: number) => {
     setFilters(prev => ({ ...prev, page }));
+  };
+
+  // Modal handlers
+  const handleCreateStudent = () => {
+    setSelectedStudent(null);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleEditStudent = (student: Student) => {
+    setSelectedStudent(student);
+    setIsEditModalOpen(true);
+  };
+
+  const handleViewStudent = (student: Student) => {
+    navigate(`/students/${student.id_student}`);
+  };
+
+  const handleDeleteStudent = (student: Student) => {
+    setSelectedStudent(student);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedStudent) {
+      deleteMutation.mutate(selectedStudent.id_student);
+    }
+  };
+
+  const handleModalSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['students'] });
   };
 
   if (isLoading) {
@@ -77,7 +127,7 @@ const StudentsList: React.FC = () => {
               Manage your academy's students and their information.
             </p>
           </div>
-          <button className="btn btn-primary">
+          <button className="btn btn-primary" onClick={handleCreateStudent}>
             <PlusIcon className="h-4 w-4 mr-2" />
             Add Student
           </button>
@@ -200,13 +250,25 @@ const StudentsList: React.FC = () => {
                   </td>
                   <td className="table-cell">
                     <div className="flex space-x-2">
-                      <button className="text-primary-600 hover:text-primary-900">
+                      <button
+                        onClick={() => handleViewStudent(student)}
+                        className="text-gray-400 hover:text-gray-600"
+                        title="View Details"
+                      >
                         <EyeIcon className="h-4 w-4" />
                       </button>
-                      <button className="text-secondary-600 hover:text-secondary-900">
+                      <button
+                        onClick={() => handleEditStudent(student)}
+                        className="text-gray-400 hover:text-gray-600"
+                        title="Edit Student"
+                      >
                         <PencilIcon className="h-4 w-4" />
                       </button>
-                      <button className="text-danger-600 hover:text-danger-900">
+                      <button
+                        onClick={() => handleDeleteStudent(student)}
+                        className="text-gray-400 hover:text-red-600"
+                        title="Delete Student"
+                      >
                         <TrashIcon className="h-4 w-4" />
                       </button>
                     </div>
@@ -229,7 +291,7 @@ const StudentsList: React.FC = () => {
                 Previous
               </button>
               <button
-                onClick={() => handlePageChange(Math.min(studentsData.pagination.totalPages, filters.page! + 1))}
+                onClick={() => handlePageChange(Math.min(studentsData.pagination?.totalPages || 1, filters.page! + 1))}
                 disabled={filters.page === studentsData.pagination.totalPages}
                 className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -264,7 +326,7 @@ const StudentsList: React.FC = () => {
                     {filters.page}
                   </div>
                   <button
-                    onClick={() => handlePageChange(Math.min(studentsData.pagination.totalPages, filters.page! + 1))}
+                    onClick={() => handlePageChange(Math.min(studentsData.pagination?.totalPages || 1, filters.page! + 1))}
                     disabled={filters.page === studentsData.pagination.totalPages}
                     className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -276,6 +338,36 @@ const StudentsList: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <StudentModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleModalSuccess}
+      />
+
+      <StudentModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        student={selectedStudent}
+        onSuccess={handleModalSuccess}
+      />
+
+      <StudentDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        student={selectedStudent}
+      />
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Student"
+        message="Are you sure you want to delete this student? This action cannot be undone."
+        itemName={selectedStudent ? `${selectedStudent.first_name} ${selectedStudent.last_name}` : ''}
+        isDeleting={deleteMutation.isPending}
+      />
     </div>
   );
 };

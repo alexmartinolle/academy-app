@@ -4,7 +4,7 @@ import {
   UserGroupIcon,
   CurrencyDollarIcon,
   ExclamationTriangleIcon,
-  TrendingUpIcon,
+  ArrowTrendingUpIcon,
 } from '@heroicons/react/24/outline';
 import statsService from '../services/statsService';
 import { formatCurrency, formatNumber } from '../utils/formatters';
@@ -68,7 +68,7 @@ const Dashboard: React.FC = () => {
     {
       name: 'Potential Revenue',
       value: formatCurrency(stats?.monthly_potential_revenue || 0),
-      icon: TrendingUpIcon,
+      icon: ArrowTrendingUpIcon,
       color: 'bg-secondary-500',
       change: 0,
       changeText: 'monthly',
@@ -101,7 +101,7 @@ const Dashboard: React.FC = () => {
                       {kpi.name}
                     </dt>
                     <dd className="flex items-baseline">
-                      <div className="text-2xl font-semibold text-gray-900">
+                      <div className="text-2xl font-semibold text-black">
                         {kpi.value}
                       </div>
                       {kpi.change !== 0 && (

@@ -1,17 +1,63 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusIcon, EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { formatCurrency, getPlanFrequencyText } from '../utils/formatters';
 import { Plan } from '../types';
+import planService from '../services/planService';
+import PlanModal from '../components/modals/PlanModal';
+import DeleteConfirmModal from '../components/modals/DeleteConfirmModal';
 
 const PlansList: React.FC = () => {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+
+  const queryClient = useQueryClient();
+
   const { data: plansData, isLoading, error } = useQuery({
     queryKey: ['plans'],
-    queryFn: async () => {
-      // Placeholder for plans service
-      return { success: true, data: [] };
+    queryFn: () => planService.getPlansWithStats(),
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: planService.deletePlan,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plans'] });
+      setIsDeleteModalOpen(false);
+      setSelectedPlan(null);
+    },
+    onError: (error: any) => {
+      console.error('Failed to delete plan:', error);
     },
   });
+
+  // Modal handlers
+  const handleCreatePlan = () => {
+    setSelectedPlan(null);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleEditPlan = (plan: Plan) => {
+    setSelectedPlan(plan);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeletePlan = (plan: Plan) => {
+    setSelectedPlan(plan);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedPlan) {
+      deleteMutation.mutate(selectedPlan.id_plan);
+    }
+  };
+
+  const handleModalSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['plans'] });
+  };
 
   if (isLoading) {
     return (
@@ -42,7 +88,7 @@ const PlansList: React.FC = () => {
               Manage subscription plans and pricing.
             </p>
           </div>
-          <button className="btn btn-primary">
+          <button className="btn btn-primary" onClick={handleCreatePlan}>
             <PlusIcon className="h-4 w-4 mr-2" />
             Add Plan
           </button>
@@ -63,15 +109,87 @@ const PlansList: React.FC = () => {
               </tr>
             </thead>
             <tbody className="table-body">
-              <tr>
-                <td colSpan={7} className="table-cell text-center text-gray-500">
-                  No plans found. Click "Add Plan" to create your first plan.
-                </td>
-              </tr>
+              {plansData?.data?.map((plan: Plan) => (
+                <tr key={plan.id_plan} className="table-row">
+                  <td className="table-cell">
+                    <div className="text-sm font-medium text-gray-900">
+                      {plan.name}
+                    </div>
+                  </td>
+                  <td className="table-cell">
+                    <span className="text-sm text-gray-900 capitalize">
+                      {plan.type}
+                    </span>
+                  </td>
+                  <td className="table-cell">
+                    <span className="text-sm text-gray-900">
+                      {getPlanFrequencyText(plan.frequency)}
+                    </span>
+                  </td>
+                  <td className="table-cell">
+                    <span className="text-sm font-medium text-gray-900">
+                      {formatCurrency(plan.monthly_price)}
+                    </span>
+                  </td>
+                  <td className="table-cell">
+                    <span className="text-sm text-gray-900">
+                      {(plan as any).student_count || 0}
+                    </span>
+                  </td>
+                  <td className="table-cell">
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleEditPlan(plan)}
+                        className="text-gray-400 hover:text-gray-600"
+                        title="Edit Plan"
+                      >
+                        <PencilIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeletePlan(plan)}
+                        className="text-gray-400 hover:text-red-600"
+                        title="Delete Plan"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )) || (
+                <tr>
+                  <td colSpan={7} className="table-cell text-center text-gray-500">
+                    No plans found. Click "Add Plan" to create your first plan.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Modals */}
+      <PlanModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleModalSuccess}
+      />
+
+      <PlanModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        plan={selectedPlan}
+        onSuccess={handleModalSuccess}
+      />
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Plan"
+        message="Are you sure you want to delete this plan? This action cannot be undone."
+        itemName={selectedPlan ? selectedPlan.name : ''}
+        isDeleting={deleteMutation.isPending}
+      />
     </div>
   );
 };

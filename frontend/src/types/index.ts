@@ -11,10 +11,20 @@ export interface Student extends BaseEntity {
   first_name: string;
   last_name: string;
   email: string;
+  phone?: string;
   type: 'adult' | 'kids';
   status: 'active' | 'inactive' | 'payment_pending';
   enrollment_date: string;
-  cancellation_date?: string;
+  cancellation_date?: string | null;
+  current_plan_name?: string;
+  last_payment_date?: string | null;
+  last_payment_period_end?: string | null;
+  payment_required?: boolean;
+  days_since_last_payment?: number;
+  total_paid_ever?: string;
+  total_payments_count?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Plan Types
@@ -38,14 +48,15 @@ export interface Payment extends BaseEntity {
   period_end: string;
   total_amount: number;
   payment_method: 'cash' | 'transfer' | 'card';
+  status?: 'paid' | 'pending' | 'overdue';
   observations?: string;
-}
-
-// Modality Types
-export interface Modality extends BaseEntity {
-  id_modality: number;
-  name: string;
-  active: boolean;
+  created_at: string;
+  updated_at: string;
+  // Additional fields for display
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  plan_name?: string;
 }
 
 // Student Plan Types
@@ -54,7 +65,14 @@ export interface StudentPlan extends BaseEntity {
   id_student: number;
   id_plan: number;
   start_date: string;
-  end_date?: string;
+  end_date?: string | null;
+  active: boolean;
+}
+
+// Modality Types
+export interface Modality extends BaseEntity {
+  id_modality: number;
+  name: string;
   active: boolean;
 }
 
@@ -135,14 +153,15 @@ export interface StudentFilters {
 export interface PaymentFilters {
   page?: number;
   limit?: number;
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
   id_student?: number;
-  payment_method?: 'cash' | 'transfer' | 'card';
+  payment_method?: string;
   date_from?: string;
   date_to?: string;
   min_amount?: number;
   max_amount?: number;
-  sort_by?: string;
-  sort_order?: 'asc' | 'desc';
+  search?: string;
 }
 
 // Chart Data Types

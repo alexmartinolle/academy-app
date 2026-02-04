@@ -5,7 +5,7 @@ class PlanController {
   // GET /api/plans - List plans with pagination and filters
   async getPlans(req, res) {
     try {
-      const { page, limit, type, frequency, active, search } = req.query;
+      const { page, limit, type, frequency, active, search, include_stats } = req.query;
       const offset = (page - 1) * limit;
 
       let whereClause = 'WHERE p.active = true';
@@ -39,23 +39,36 @@ class PlanController {
       const countResult = await query(countQuery, queryParams);
       const total = parseInt(countResult.rows[0].total);
 
-      // Get plans with student count
-      const plansQuery = `
-        SELECT 
-          p.*,
-          COUNT(sp.id_student) as student_count,
-          COUNT(sp.id_student) FILTER (WHERE s.status = 'active') as active_students,
-          array_agg(m.name ORDER BY m.name) FILTER (WHERE m.name IS NOT NULL) as modalities
-        FROM plans p
-        LEFT JOIN student_plan sp ON p.id_plan = sp.id_plan AND sp.active = true
-        LEFT JOIN students s ON sp.id_student = s.id_student
-        LEFT JOIN plan_modality pm ON p.id_plan = pm.id_plan
-        LEFT JOIN modalities m ON pm.id_modality = m.id_modality
-        ${whereClause}
-        GROUP BY p.id_plan
-        ORDER BY p.name
-        LIMIT $${paramIndex++} OFFSET $${paramIndex++}
-      `;
+      let plansQuery;
+      
+      if (include_stats === 'true') {
+        // Get plans with student count and modalities
+        plansQuery = `
+          SELECT 
+            p.*,
+            COUNT(sp.id_student) as student_count,
+            COUNT(sp.id_student) FILTER (WHERE s.status = 'active') as active_students,
+            array_agg(m.name ORDER BY m.name) FILTER (WHERE m.name IS NOT NULL) as modalities
+          FROM plans p
+          LEFT JOIN student_plan sp ON p.id_plan = sp.id_plan AND sp.active = true
+          LEFT JOIN students s ON sp.id_student = s.id_student
+          LEFT JOIN plan_modality pm ON p.id_plan = pm.id_plan
+          LEFT JOIN modalities m ON pm.id_modality = m.id_modality
+          ${whereClause}
+          GROUP BY p.id_plan
+          ORDER BY p.name
+          LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+        `;
+      } else {
+        // Get plans without stats (original behavior)
+        plansQuery = `
+          SELECT p.*
+          FROM plans p
+          ${whereClause}
+          ORDER BY p.name
+          LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+        `;
+      }
 
       queryParams.push(limit, offset);
       const result = await query(plansQuery, queryParams);

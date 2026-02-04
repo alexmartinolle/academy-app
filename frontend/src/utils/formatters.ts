@@ -7,8 +7,13 @@ export const formatCurrency = (amount: number, currency = 'USD'): string => {
 };
 
 // Date formatter
-export const formatDate = (date: string | Date, format = 'short'): string => {
+export const formatDate = (date: string | Date | null | undefined, format = 'short'): string => {
+  if (!date) return 'N/A';
+  
   const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  // Check if date is invalid
+  if (isNaN(dateObj.getTime())) return 'Invalid Date';
   
   if (format === 'short') {
     return dateObj.toLocaleDateString('en-US', {
@@ -48,8 +53,14 @@ export const formatDate = (date: string | Date, format = 'short'): string => {
 };
 
 // Relative time formatter
-export const formatRelativeTime = (date: string | Date): string => {
+export const formatRelativeTime = (date: string | Date | null | undefined): string => {
+  if (!date) return 'N/A';
+  
   const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  // Check if date is invalid
+  if (isNaN(dateObj.getTime())) return 'Invalid Date';
+  
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - dateObj.getTime()) / 1000);
   
@@ -211,9 +222,9 @@ export const buildQueryString = (params: Record<string, any>): string => {
 };
 
 // Array helpers
-export const groupBy = <T, K extends keyof any>(array: T[], key: K): Record<string, T[]> => {
+export const groupBy = <T, K extends keyof T>(array: T[], key: K): Record<string, T[]> => {
   return array.reduce((groups, item) => {
-    const group = item[key];
+    const group = String(item[key]);
     groups[group] = groups[group] || [];
     groups[group].push(item);
     return groups;

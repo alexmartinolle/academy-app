@@ -5,7 +5,7 @@ class ModalityController {
   // GET /api/modalities - List modalities with pagination and filters
   async getModalities(req, res) {
     try {
-      const { page, limit, active, search } = req.query;
+      const { page, limit, active, search, include_stats } = req.query;
       const offset = (page - 1) * limit;
 
       let whereClause = 'WHERE 1=1';
@@ -31,25 +31,38 @@ class ModalityController {
       const countResult = await query(countQuery, queryParams);
       const total = parseInt(countResult.rows[0].total);
 
-      // Get modalities with additional stats
-      const modalitiesQuery = `
-        SELECT 
-          m.*,
-          COUNT(DISTINCT sp.id_student) as total_students,
-          COUNT(DISTINCT sp.id_student) FILTER (WHERE s.status = 'active') as active_students,
-          COUNT(DISTINCT p.id_plan) as plans_offering,
-          COALESCE(SUM(pay.total_amount), 0) as total_revenue_all_time
-        FROM modalities m
-        LEFT JOIN plan_modality pm ON m.id_modality = pm.id_modality
-        LEFT JOIN plans p ON pm.id_plan = p.id_plan AND p.active = true
-        LEFT JOIN student_plan sp ON p.id_plan = sp.id_plan AND sp.active = true
-        LEFT JOIN students s ON sp.id_student = s.id_student
-        LEFT JOIN payments pay ON pay.id_plan = p.id_plan
-        ${whereClause}
-        GROUP BY m.id_modality
-        ORDER BY m.name
-        LIMIT $${paramIndex++} OFFSET $${paramIndex++}
-      `;
+      let modalitiesQuery;
+      
+      if (include_stats === 'true') {
+        // Get modalities with additional stats
+        modalitiesQuery = `
+          SELECT 
+            m.*,
+            COUNT(DISTINCT sp.id_student) as student_count,
+            COUNT(DISTINCT sp.id_student) FILTER (WHERE s.status = 'active') as active_students,
+            COUNT(DISTINCT p.id_plan) as plan_count,
+            COALESCE(SUM(pay.total_amount), 0) as total_revenue_all_time
+          FROM modalities m
+          LEFT JOIN plan_modality pm ON m.id_modality = pm.id_modality
+          LEFT JOIN plans p ON pm.id_plan = p.id_plan AND p.active = true
+          LEFT JOIN student_plan sp ON p.id_plan = sp.id_plan AND sp.active = true
+          LEFT JOIN students s ON sp.id_student = s.id_student
+          LEFT JOIN payments pay ON pay.id_plan = p.id_plan
+          ${whereClause}
+          GROUP BY m.id_modality
+          ORDER BY m.name
+          LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+        `;
+      } else {
+        // Get modalities without stats (original behavior)
+        modalitiesQuery = `
+          SELECT m.*
+          FROM modalities m
+          ${whereClause}
+          ORDER BY m.name
+          LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+        `;
+      }
 
       queryParams.push(limit, offset);
       const result = await query(modalitiesQuery, queryParams);

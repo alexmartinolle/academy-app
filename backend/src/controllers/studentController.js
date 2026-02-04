@@ -306,6 +306,73 @@ class StudentController {
       return badRequest(res, 'Error retrieving student plans');
     }
   }
+
+  // POST /api/students/:id/change-plan - Change student plan
+  async changeStudentPlan(req, res) {
+    try {
+      const { id } = req.params;
+      const { new_plan_id } = req.body;
+
+      // Check if student exists
+      const existingStudentQuery = `
+        SELECT id_student FROM students WHERE id_student = $1
+      `;
+      const existingStudentResult = await query(existingStudentQuery, [id]);
+
+      if (existingStudentResult.rows.length === 0) {
+        return notFound(res, 'Student not found');
+      }
+
+      // Check if new plan exists
+      const existingPlanQuery = `
+        SELECT id_plan, name FROM plans WHERE id_plan = $1 AND active = true
+      `;
+      const existingPlanResult = await query(existingPlanQuery, [new_plan_id]);
+
+      if (existingPlanResult.rows.length === 0) {
+        return notFound(res, 'Plan not found or inactive');
+      }
+
+      // Start transaction
+      await query('BEGIN');
+
+      try {
+        // Deactivate current student plans
+        const deactivatePlansQuery = `
+          UPDATE student_plan 
+          SET active = false, end_date = CURRENT_DATE
+          WHERE id_student = $1 AND active = true
+        `;
+        await query(deactivatePlansQuery, [id]);
+
+        // Create new student plan association
+        const newPlanQuery = `
+          INSERT INTO student_plan (id_student, id_plan, start_date, active)
+          VALUES ($1, $2, CURRENT_DATE, true)
+          RETURNING *
+        `;
+        const newPlanResult = await query(newPlanQuery, [id, new_plan_id]);
+
+        // Commit transaction
+        await query('COMMIT');
+
+        return success(res, {
+          old_plan_deactivated: true,
+          new_plan: newPlanResult.rows[0],
+          plan_name: existingPlanResult.rows[0].name
+        }, 'Plan changed successfully');
+
+      } catch (error) {
+        // Rollback on error
+        await query('ROLLBACK');
+        throw error;
+      }
+
+    } catch (error) {
+      console.error('Error changing student plan:', error);
+      return badRequest(res, 'Error changing student plan');
+    }
+  }
 }
 
 module.exports = new StudentController();

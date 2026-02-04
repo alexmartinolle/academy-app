@@ -35,6 +35,10 @@ const studentSchemas = {
     search: Joi.string().max(100).optional(),
     sort_by: Joi.string().valid('first_name', 'last_name', 'email', 'enrollment_date', 'status').default('last_name'),
     sort_order: Joi.string().valid('asc', 'desc').default('asc')
+  }),
+
+  changePlan: Joi.object({
+    new_plan_id: Joi.number().integer().positive().required()
   })
 };
 
@@ -63,7 +67,8 @@ const planSchemas = {
     type: Joi.string().valid('adult', 'kids').optional(),
     frequency: Joi.string().valid('1_week', '2_week', 'unlimited').optional(),
     active: Joi.boolean().optional(),
-    search: Joi.string().max(100).optional()
+    search: Joi.string().max(100).optional(),
+    include_stats: Joi.string().valid('true', 'false').optional()
   })
 };
 
@@ -109,7 +114,8 @@ const modalitySchemas = {
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(20),
     active: Joi.boolean().optional(),
-    search: Joi.string().max(100).optional()
+    search: Joi.string().max(100).optional(),
+    include_stats: Joi.string().valid('true', 'false').optional()
   })
 };
 

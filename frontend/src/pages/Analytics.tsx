@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ChartBarIcon, TrendingUpIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { ChartBarIcon, ArrowTrendingUpIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 
 const Analytics: React.FC = () => {
   const { data: analyticsData, isLoading, error } = useQuery({
@@ -82,7 +82,7 @@ const Analytics: React.FC = () => {
           <div className="card-body">
             <div className="flex items-center">
               <div className="flex-shrink-0 p-3 rounded-lg bg-warning-500">
-                <TrendingUpIcon className="h-6 w-6 text-white" />
+                <ArrowTrendingUpIcon className="h-6 w-6 text-white" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
@@ -141,7 +141,7 @@ const Analytics: React.FC = () => {
           <div className="card-body">
             <div className="h-64 flex items-center justify-center text-gray-500">
               <div className="text-center">
-                <TrendingUpIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <ArrowTrendingUpIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                 <p>Growth chart will be displayed here</p>
               </div>
             </div>

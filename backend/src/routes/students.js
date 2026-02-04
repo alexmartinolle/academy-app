@@ -46,4 +46,10 @@ router.get('/:id/plans',
   studentController.getStudentPlans
 );
 
+// POST /api/students/:id/change-plan - Change student plan
+router.post('/:id/change-plan',
+  validate(schemas.student.changePlan),
+  studentController.changeStudentPlan
+);
+
 module.exports = router;

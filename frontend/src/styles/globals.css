@@ -10,7 +10,7 @@
 
   body {
     @apply font-sans antialiased;
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-white text-black;
   }
 
   /* Custom scrollbar */
@@ -23,16 +23,16 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 rounded-full;
+    @apply bg-gray-400 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400;
+    @apply bg-gray-500;
   }
 
   /* Focus styles */
   *:focus {
-    @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+    @apply outline-none ring-2 ring-red-500 ring-offset-2;
   }
 }
 
@@ -44,32 +44,36 @@
   }
 
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
   }
 
   .btn-secondary {
-    @apply bg-secondary-600 text-white hover:bg-secondary-700 focus:ring-secondary-500;
+    @apply bg-black text-white hover:bg-gray-800 focus:ring-gray-500;
   }
 
   .btn-success {
-    @apply bg-success-600 text-white hover:bg-success-700 focus:ring-success-500;
+    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
   }
 
   .btn-warning {
-    @apply bg-warning-600 text-white hover:bg-warning-700 focus:ring-warning-500;
+    @apply bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500;
   }
 
   .btn-danger {
-    @apply bg-danger-600 text-white hover:bg-danger-700 focus:ring-danger-500;
+    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
   }
 
   .btn-outline {
-    @apply border-gray-300 text-gray-700 bg-white hover:bg-gray-50 focus:ring-primary-500;
+    @apply border-red-600 text-red-600 bg-white hover:bg-red-600 hover:text-white focus:ring-red-500;
+  }
+
+  .btn-outline-dark {
+    @apply border-black text-black bg-white hover:bg-black hover:text-white focus:ring-black;
   }
 
   /* Form styles */
   .form-input {
-    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm;
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm;
   }
 
   .form-label {
@@ -82,7 +86,7 @@
 
   /* Card styles */
   .card {
-    @apply bg-white overflow-hidden shadow rounded-lg;
+    @apply bg-white overflow-hidden shadow rounded-lg border border-gray-200;
   }
 
   .card-header {
@@ -171,7 +175,7 @@
   }
 
   .page-header {
-    @apply mb-8;
+    @apply mb-8 mt-6;
   }
 
   .page-title {
@@ -188,11 +192,11 @@
   }
 
   .nav-link-active {
-    @apply bg-primary-100 text-primary-700;
+    @apply bg-red-600 text-white;
   }
 
   .nav-link-inactive {
-    @apply text-gray-600 hover:text-gray-900 hover:bg-gray-50;
+    @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900;
   }
 
   /* Modal styles */
